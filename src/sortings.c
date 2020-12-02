@@ -29,49 +29,53 @@ void insertion(strings_array_t arr, array_size_t array_size, comparator_func_t c
 
 /*Merge sort*/
 
+void mergeSort2(strings_array_t arr, int left, int mid, int right, comparator_func_t comparator) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+    char *left_m[n1], *right_m[n2];
+    for (int i = 0; i < n1; i++) {
+        left_m[i] = arr[left + i];
+    }
+    for (int j = 0; j < n2; j++) {
+        right_m[j] = arr[mid + 1 + j];
+    }
+    int i = 0;
+    int j = 0;
+    int k = left;
+    while (i < n1 && j < n2) {
+        if (comparator(left_m[i], right_m[j]) == 2) {
+            arr[k] = left_m[i];
+            i++;
+        } else {
+            arr[k] = right_m[j];
+            j++;
+        }
+        k++;
+    }
+    while (i < n1) {
+        arr[k] = left_m[i];
+        i++;
+        k++;
+    }
+    while (j < n2) {
+        arr[k] = right_m[j];
+        j++;
+        k++;
+    }
+}
+
+void mergeSort(strings_array_t arr, int left, int right, comparator_func_t comparator) {
+    if (left >= right) {
+        return;
+    }
+    int mid = (left + right - 1) / 2;
+    mergeSort(arr, left, mid, comparator);
+    mergeSort(arr, mid + 1, right, comparator);
+    mergeSort2(arr, left, mid, right, comparator);
+}
+
 void merge(strings_array_t arr, array_size_t array_size, comparator_func_t comparator) {
-	int mid = array_size / 2;
-	if (array_size % 2 == 1) {
-		mid++;
-	}
-	strings_array_t intermediate_arr;
-	intermediate_arr = (strings_array_t)malloc( sizeof(strings_array_t) * array_size);
-	for (int i = 0; i < (int) array_size; ++i) {
-		intermediate_arr[i] = (char *)malloc(sizeof(char) * (MAX_INPUT_STRING_SIZE + 1));
-	}
-	int step;
-	int h = 1; //шаг
-	while (h < (int) array_size) {
-		step = h;
-		int i = 0;
-		int j = mid;
-		int k = 0;
-		while (step <= mid) {
-			while ((i < step) && (j < (int) array_size) && j < (mid + step)) {
-				if (comparator(arr[i], arr[j]) == 2) {
-					intermediate_arr[k] = arr[i];
-					i++; k++; 
-				}
-				else {
-					intermediate_arr[k] = arr[j];
-					j++; k++; 
-				}
-			}
-			while (i < step) {
-				intermediate_arr[k] = arr[i];
-				i++; k++; 
-			}
-			while (j < (mid + step) && (j < (int) array_size)) {
-				intermediate_arr[k] = arr[j];
-				j++; k++;
-			}
-			step += h;
-		}
-		h *= 2;
-		for (int i = 0; i < (int) array_size; i++) {
-			arr[i] = intermediate_arr[i];
-		}
-	}
+    mergeSort(arr, 0, (int) array_size - 1, comparator);
 }
 
 /*Quick sort*/
