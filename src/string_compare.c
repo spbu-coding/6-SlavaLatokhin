@@ -66,7 +66,7 @@ strings_array_t Read_file(char* filename, int* return_value, int strings_count) 
 		return NULL;
 	}
 	for (int i = 0; i < strings_count; ++i) {
-		arr[i] = (char *)calloc(sizeof(char), (MAX_INPUT_STRING_SIZE + 1));
+		arr[i] = (char *)calloc(sizeof(char), (MAX_INPUT_STRING_SIZE + 2));
 		if (!arr[i]) {
 			free_arr(arr, i);
 			fprintf(stderr, "Cannot allocate memory for %d string \n", i);
@@ -74,9 +74,10 @@ strings_array_t Read_file(char* filename, int* return_value, int strings_count) 
 			*return_value = -1;
 			return NULL;
 		}
-		if (fgets(arr[i], MAX_INPUT_STRING_SIZE + 1, input_file) == NULL) {
+		if (fgets(arr[i], MAX_INPUT_STRING_SIZE + 2, input_file) == NULL) {
 			fprintf(stderr, "The number of strings in input file is less than the specified number\n");
 			fclose(input_file);
+			free_arr(arr, i);
 			*return_value = -1;
 			return NULL;
 		}
@@ -85,7 +86,7 @@ strings_array_t Read_file(char* filename, int* return_value, int strings_count) 
 
 	int string_length = strlen(arr[strings_count - 1]);
 	if (arr[strings_count - 1][string_length - 1] != '\n') {
-		if (string_length == MAX_INPUT_STRING_SIZE) {
+		if (string_length == MAX_INPUT_STRING_SIZE + 1) {
             fprintf(stderr, "The last line contains an unsupported number of characters)\n");
             *return_value = -1;
 			return NULL;
@@ -104,8 +105,13 @@ void Write_file(char* filename, int* return_value, int strings_count,  strings_a
         *return_value = -1;
         return;
     }
-    for (int i = 0; i < strings_count; ++i) {
-		fputs( arr[i], output_file );
+    if (strings_count == 0) {
+    	fputs(arr[0], output_file);
+    }
+    else {
+    	for (int i = 0; i < strings_count; ++i) {
+			fputs(arr[i], output_file);
+		}
 	}
 	fclose(output_file);
 }
@@ -127,8 +133,18 @@ int main(int argc, char* argv[]) {
 	int return_value = 0;
 	comparator_func_t comparator;
 	if (checking_parameters(argc) != 0) return -1;
-	strings_array_t arr = Read_file(argv[2], &return_value, atoi(argv[1]));
-	if (return_value != 0) return -1;
+
+	array_size_t entered_number_of_lines = strtol(argv[1], NULL, 10);
+
+	if (entered_number_of_lines == 0 && argv[1][0] != '0') {
+		printf("Error! Here.");
+		return -1;
+	}
+	if (entered_number_of_lines == 0 && argv[1][0] == '0') {
+		char* arr[1] = {"\n"};
+		Write_file(argv[3], &return_value, 0, arr);
+		return return_value;
+	}
 
 	if (strncmp(argv[5], comparators[0], ASC_LENGTH) == 0) {
 		comparator = string_compare_asc;
@@ -140,6 +156,10 @@ int main(int argc, char* argv[]) {
 		printf("Error! Available comparators: asc, des.\n");
 		return -1;
 	}
+
+	strings_array_t arr = Read_file(argv[2], &return_value, atoi(argv[1]));
+	if (return_value != 0) return -1;
+
 
 	if (strncmp(argv[4], algorithms[0], BUBBLE_LENGTH) == 0) {
 		bubble(arr, atoi(argv[1]), comparator);
@@ -158,10 +178,12 @@ int main(int argc, char* argv[]) {
 	}
 	else {
 		printf("Error! Available algorithms: bubble, insertion, merge, quick, radix.\n");
+		free_arr(arr, atoi(argv[1]));
 		return -1;
 	}
 
 	Write_file(argv[3], &return_value, atoi(argv[1]), arr);
+	free_arr(arr, atoi(argv[1]));
 	if (return_value != 0) return -1;
 	return 0;
 }
